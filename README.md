@@ -3,7 +3,7 @@
 Jeu de RPG au tour par tour
 utilisation de Pygame
 
-Fichier requirements.txt
+Fichier requirements.txt fournis
 
 méthode de pathfinding Astar
 

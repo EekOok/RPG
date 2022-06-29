@@ -1,14 +1,14 @@
 {
 
-  "Spider Egg" : {"image" : "spideregg.png",
+  "Spider Egg" : {"image" : "./images/pnj/spideregg.png",
                     "ia" : ["Gardian", "Oeuf"],
                     "fille" : "Spider"},
 
-  "Spider" : {"image" : "spider.png",
+  "Spider" : {"image" : "./images/pnj/spider.png",
                     "ia" : ["Hunter"],
                     "fille": "None"},
 
-  "Spider Queen" : {"image" : "spider_queen.png",
+  "Spider Queen" : {"image" : "./images/pnj/spider_queen.png",
                     "ia" : ["FieldKeeper", "Mother"],
                     "fille" : "Spider Egg"}
 }

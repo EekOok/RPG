@@ -1,10 +1,12 @@
 """Module de Gestion des interactions de PJ et PNJ"""
 
 import random
+from enum import Enum, auto
 
 # ---------------------------------------------------
 # Fonction générique
 # ---------------------------------------------------
+
 
 def d20(nb=1):
     """gestion d'un lancer de dé à 20 faces"""
@@ -16,8 +18,22 @@ def d6(nb=1):
     return random.randint(1, 6)
 
 # ---------------------------------------------------
+# Enum
+# ---------------------------------------------------
+
+
+class FightEvent(Enum):
+    PJ_ATTACK_SUCCESS = auto()
+    PJ_ATTACK_FAILED = auto()
+    PNJ_ATTACK_SUCCESS = auto()
+    PNJ_ATTACK_FAILED = auto()
+    PNJ_DEAD = auto()
+
+
+# ---------------------------------------------------
 # Class liées au PJ/Pnj
 # ---------------------------------------------------
+
 
 class Vivant:
     """Gestion des capacités passives des êtres vivants """
@@ -46,6 +62,7 @@ class Vivant:
         self.point_de_vie = max(0, self.point_de_vie)
         print(f'{self.nom}arg je souffre. pdv restant = {self.point_de_vie}')
         self.calcul_etat()
+        return self.point_de_vie, self.etat
 
     def calcul_etat(self):
         ancien_etat = self.etat
@@ -100,18 +117,25 @@ class Combattant:
 
         if cible_touche:
             print(f"{self.nom}: oui je t'ai touché, youpi!Attaque={valeur_attaque}")
-            self.faire_degat_cible(cible)
+            jet, degat, pdv_restant, etat = self.faire_degat_cible(cible)
+            return FightEvent.PJ_ATTACK_SUCCESS, self.nom, cible.nom, valeur_attaque, valeur_def, jet, degat, pdv_restant, etat
+
         else:
             print(f"{self.nom}: tu perd rien pour attendre!Attaque={valeur_attaque}")
+            return FightEvent.PJ_ATTACK_FAILED, self.nom, cible.nom, valeur_attaque, valeur_def
 
     def faire_degat_cible(self, cible):
         jet = d6()
         print(f"{self.nom}: dégat = {jet+self.degat}")
-        cible.recevoir_degat(jet+self.degat)
+
+        pdv_restant, etat = cible.recevoir_degat(jet+self.degat)
+        return jet, self.degat, pdv_restant, etat
+
 
 # ---------------------------------------------------
-# Fusion de class
+# Fusion de class vivant/animé
 # ---------------------------------------------------
+
 
 class Joueur(Vivant, Combattant, Magicien):
     """ Fusion des class Vivant / Combattant / Magicien"""
@@ -160,7 +184,33 @@ class Pnj(Vivant, Combattant):
         jet = d20()
         return pj.discretion(jet+self.perception)
 
+
 # ---------------------------------------------------
+
+class Item:
+    """objet de base"""
+
+    def __init__(self, nom, id):
+        self.id = id
+        self.nom = nom
+
+    def __str__(self):
+        return f"{self.nom}: id={self.id}"
+
+
+class Porte(Item):
+    def __init__(self, nom, id, status='closed', crochetable=False, dif_crochetage = 99):
+        super().__init__(nom, id)
+        self.status = status
+        self.condition_pj = False
+        self.condition_map = False
+        self.crochetable = crochetable
+        self.difficulte_croche = dif_crochetage
+
+    def interact(self, apj, amap):
+        if self.condition_pj and self.condition_map:
+            self.status = 'open'
+
 
 if __name__ == '__main__':
     Hero = Joueur('Toto', 5, 4, 3, 2, 1, 0)

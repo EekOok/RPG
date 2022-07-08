@@ -3,7 +3,9 @@ import pygame
 import PIL.Image
 
 # pour test uniquement
+import Tools
 import mechanics
+import game
 
 BLANC = (255, 255, 255)
 NOIR = (0, 0, 0)
@@ -65,7 +67,6 @@ class Menu:
 
 class MenuMsg(Menu):
     def __init__(self, nom, dimension, msg, font):
-
         super().__init__(nom, dimension)
         self.font = font
         self.label = self.font.render(msg, True, JAUNE)
@@ -78,7 +79,6 @@ class MenuMsg(Menu):
 class MenuSelect(Menu):
     """ Menu qui créer une liste verticale avec un curseur de selection"""
     def __init__(self, nom, dimension, dico_choix, font, focus=True):
-
         super().__init__(nom, dimension)
 
         self.image_curseur = pygame.image.load("./images/menu/fleche.png").convert_alpha()
@@ -86,7 +86,6 @@ class MenuSelect(Menu):
         self.focus = focus
 
         self.dico_choix = dico_choix
-
 
         self.liste_choix = []
         for key in self.dico_choix:
@@ -272,6 +271,7 @@ class Jauge:
 class Creaperso:
     def __init__(self, font):
         self.font = font
+
         self.cadre_couleur = Menu('couleur', (0, 0, 320, 200))
         self.label_couleur = self.font.render('Couleur', True, JAUNE)
         self.label_chev = self.font.render('< Cheveux  >', True, JAUNE)
@@ -279,12 +279,13 @@ class Creaperso:
         self.label_peau = self.font.render('<   Peau   >', True, JAUNE)
         self.label_chemise = self.font.render('< Chemise  >', True, JAUNE)
         self.label_pantalon = self.font.render('< Pantalon >', True, JAUNE)
+
         self.ligne_selector = 0
         self.cadre_selector = 0
         self.liste_coul = ["rouge", "rouge sombre", "bleu", "bleu sombre", "vert", "vert sombre", "black", "rose"]
         self.index = [1, 4, 7, 6, 5]
         self.sprite_sheet = None
-        self.modifcoul = True #  pour optimiser l'acces au fichier img
+        self.modifcoul = True  # pour optimiser l'accès au fichier img
 
         self.cadre_carac = Menu('carac', (320, 0, 320, 200))
         self.label_carac = self.font.render('Caractéristiques', True, JAUNE)
@@ -295,9 +296,26 @@ class Creaperso:
         self.label_sagesse = self.font.render('<    Sagesse     >', True, JAUNE)
         self.label_charisme = self.font.render('<   Charisme    >', True, JAUNE)
 
-
         self.point_car_restante = 15
         self.carindex = [0, 0, 0, 0, 0, 0]
+
+        self.cadre_atout = Menu('atout', (0, 200, 640, 440))
+        self.cadre_at1 = Menu('at1', (0, 200, 320, 120))
+
+        self.dict_atout = Tools.readthedict(f"./rules/atout.json")
+        self.liste_categorie = []
+        for categorie in self.dict_atout:
+            self.liste_categorie.append(categorie)
+        self.liste_atout = []
+        for atout in self.dict_atout[self.liste_categorie[0]]:
+            self.liste_atout.append(atout)
+        self.danscategorie = False
+        self.firstcategorie = self.liste_categorie[0]
+        self.firstatout = self.dict_atout[self.firstcategorie][self.liste_atout[0]]
+        self.indexfirstcategorie = 0
+        self.indexfirstatout = 0
+        self.label_firstcategorie = self.font.render('< '+str(self.firstcategorie)+' >', True, JAUNE)
+        self.label_firstatout = self.font.render('< None >', True, JAUNE)
 
     def getcoulliterral(self):
         listecoullit = []
@@ -310,19 +328,29 @@ class Creaperso:
         x = self.cadre_selector
         if direction.key == pygame.K_UP:
             y -= 1
+            self.danscategorie = False
         elif direction.key == pygame.K_DOWN:
             y += 1
+            self.danscategorie = False
 
         if y > 4 and x == 0:
             y = 0
             x = 1
         elif y < 0 and x == 0:
-            y = 5
-            x = 1
+            y = 0
+            x = 2
+
         elif y < 0 and x == 1:
             y = 4
             x = 0
         elif y > 5 and x == 1:
+            y = 0
+            x = 2
+
+        elif y < 0 and x == 2:
+            y = 5
+            x = 1
+        elif y > 0 and x == 2:
             y = 0
             x = 0
 
@@ -341,7 +369,7 @@ class Creaperso:
             couselector = len(self.liste_coul)-1 if x < 0 else couselector
             self.index[y] = couselector
 
-        if self.cadre_selector == 1:
+        elif self.cadre_selector == 1:
             carselector = self.carindex[y]
             if direction.key == pygame.K_RIGHT:
                 carselector += 1
@@ -350,6 +378,47 @@ class Creaperso:
             carselector = 0 if carselector > 5 else carselector
             carselector = 5 if carselector < 0 else carselector
             self.carindex[y] = carselector
+
+        elif self.cadre_selector == 2:
+            categorieselector = self.indexfirstcategorie
+            atoutselector = self.indexfirstatout
+            if not self.danscategorie:
+                modif = False
+                if direction.key == pygame.K_RIGHT:
+                    categorieselector -= 1
+                    modif = True
+                elif direction.key == pygame.K_LEFT:
+                    categorieselector += 1
+                    modif = True
+                elif direction.key == pygame.K_RETURN:
+                    self.danscategorie = True
+
+                categorieselector = 0 if categorieselector > len(self.liste_categorie) - 1 else categorieselector
+                categorieselector = len(self.liste_categorie) - 1 if categorieselector < 0 else categorieselector
+
+                self.indexfirstcategorie = categorieselector
+                self.firstcategorie = self.liste_categorie[self.indexfirstcategorie]
+                self.label_firstcategorie = self.font.render('< ' + str(self.firstcategorie) + ' >', True, JAUNE)
+
+                if modif:
+                    self.liste_atout=[]
+                    for atout in self.dict_atout[self.firstcategorie]:
+                        self.liste_atout.append(atout)
+                    self.firstatout = self.liste_atout[0]
+
+            elif self.danscategorie:
+                if direction.key == pygame.K_RIGHT:
+                    atoutselector -= 1
+                elif direction.key == pygame.K_LEFT:
+                    atoutselector += 1
+                elif direction.key == pygame.K_RETURN:
+                    self.danscategorie = False
+                atoutselector = 0 if atoutselector > len(self.liste_atout) - 1 else atoutselector
+                atoutselector = len(self.liste_atout) - 1 if atoutselector < 0 else atoutselector
+
+                self.indexfirstatout = atoutselector
+                self.firstatout = self.liste_atout[self.indexfirstatout]
+                self.label_firstatout = self.font.render('< ' + str(self.firstatout) + ' >', True, JAUNE)
 
     def update_image(self, img2modify):
         index = self.getcoulliterral()
@@ -481,41 +550,56 @@ class Creaperso:
             self.modifcoul = False
         image = self.sprite_sheet.subsurface((32, 0, 32, 32))
         image = pygame.transform.scale(image, (128, 128))
-        surface.blit(image, (120, 8+30))
+        surface.blit(image, (150, 8+30))
 
         self.cadre_carac.drawme(surface)
-        surface.blit(self.label_carac, (8+320+75, 8))
+        surface.blit(self.label_carac, (8 + 320 + 75, 8))
 
-        surface.blit(self.label_force, (8 + 320, 8+24))
+        surface.blit(self.label_force, (8 + 320, 8 + 24))
         val = self.font.render(str(self.carindex[0]), True, JAUNE)
-        surface.blit(val, (8+320+155,8+24))
+        surface.blit(val, (8+320+180, 8+24))
 
         surface.blit(self.label_dexterite, (8 + 320, 8 + 48))
         val = self.font.render(str(self.carindex[1]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 155, 8 + 48))
+        surface.blit(val, (8 + 320 + 180, 8 + 48))
 
         surface.blit(self.label_constitution, (8 + 320, 8 + 72))
         val = self.font.render(str(self.carindex[2]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 155, 8 + 72))
+        surface.blit(val, (8 + 320 + 180, 8 + 72))
 
         surface.blit(self.label_intelligence, (8 + 320, 8 + 96))
         val = self.font.render(str(self.carindex[3]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 155, 8 + 96))
+        surface.blit(val, (8 + 320 + 180, 8 + 96))
 
         surface.blit(self.label_sagesse, (8 + 320, 8 + 120))
         val = self.font.render(str(self.carindex[4]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 155, 8 + 120))
+        surface.blit(val, (8 + 320 + 180, 8 + 120))
 
         surface.blit(self.label_charisme, (8 + 320, 8 + 144))
         val = self.font.render(str(self.carindex[5]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 155, 8 + 144))
+        surface.blit(val, (8 + 320 + 180, 8 + 144))
+
+        self.cadre_atout.drawme(surface)
+        self.cadre_at1.drawme(surface)
+        surface.blit(self.label_firstcategorie,(8,8+200))
+        surface.blit(self.label_firstatout, (160, 8 + 200))
+        """self.cadre_at2.drawme(surface)
+        self.cadre_at3.drawme(surface)
+        self.cadre_at4.drawme(surface)"""
 
         if self.cadre_selector == 0:
             pygame.draw.line(surface, JAUNE, (8, 8 + (2 + self.ligne_selector) * 24),
                              (100, 8 + (2 + self.ligne_selector) * 24), 2)
-        else:
+
+        elif self.cadre_selector == 1:
             pygame.draw.line(surface, JAUNE, (320+8, 8 + (2 + self.ligne_selector) * 24),
                              (320+150, 8 + (2 + self.ligne_selector) * 24), 2)
+
+        else:
+            if not self.danscategorie:
+                pygame.draw.line(surface, JAUNE, (8, 200 + 8 + 24), (150, 200+ 8 + 24), 2)
+            else:
+                pygame.draw.line(surface, JAUNE, (160, 200 + 8 + 24), (320-8, 200 + 8 + 24), 2)
 
     def recup_pj(self):
         return {'nom': 'Bob',
@@ -529,8 +613,8 @@ if __name__ == '__main__':
     taille_fenetre = (640, 640)
     screen_surface = pygame.display.set_mode(taille_fenetre)
 
-    hero = main_pygame.Hero('Bob', [1, 1], './images/pj/pj.png')
-    meuchant = main_pygame.Mechant('Vil1', [3, 3], './images/pnj/spider.png')
+    hero = game.Hero('Bob', [1, 1], './images/pj/pj.png')
+    meuchant = game.Mechant('Vil1', [3, 3], './images/pnj/spider.png')
 
     font_par_def = pygame.font.SysFont('Comic sans MS', 20)
 

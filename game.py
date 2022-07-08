@@ -610,7 +610,7 @@ class EtapeCreaPerso:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYUP:
-                if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
+                if event.key in [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_RETURN]:
                     self.cadre.gocurseur(event)
 
     def update(self):

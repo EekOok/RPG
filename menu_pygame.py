@@ -289,33 +289,27 @@ class Creaperso:
 
         self.cadre_carac = Menu('carac', (320, 0, 320, 200))
         self.label_carac = self.font.render('Caractéristiques', True, JAUNE)
-        self.label_force = self.font.render('<     Force      >', True, JAUNE)
-        self.label_dexterite = self.font.render('<   Dextérité    >', True, JAUNE)
-        self.label_constitution = self.font.render('<  Constitution  >', True, JAUNE)
-        self.label_intelligence = self.font.render('<  Intelligence  >', True, JAUNE)
-        self.label_sagesse = self.font.render('<    Sagesse     >', True, JAUNE)
-        self.label_charisme = self.font.render('<   Charisme    >', True, JAUNE)
+
+        self.car_force = ModificateurCarac('Force',self.font)
+        self.car_dexterite = ModificateurCarac('Dextérité', self.font)
+        self.car_constitution = ModificateurCarac('Constitution', self.font)
+        self.car_intelligence = ModificateurCarac('Intelligence', self.font)
+        self.car_sagesse = ModificateurCarac('Sagesse', self.font)
+        self.car_charisme = ModificateurCarac('Charisme', self.font)
+
+        self.liste_carac = [self.car_force, self.car_dexterite, self.car_constitution,
+                        self.car_intelligence, self.car_sagesse, self.car_charisme]
+
+        self.carindex = [0, 0, 0, 0, 0, 0]
 
         self.point_car_restante = 15
-        self.carindex = [0, 0, 0, 0, 0, 0]
 
         self.cadre_atout = Menu('atout', (0, 200, 640, 440))
         self.cadre_at1 = Menu('at1', (0, 200, 320, 120))
 
         self.dict_atout = Tools.readthedict(f"./rules/atout.json")
-        self.liste_categorie = []
-        for categorie in self.dict_atout:
-            self.liste_categorie.append(categorie)
-        self.liste_atout = []
-        for atout in self.dict_atout[self.liste_categorie[0]]:
-            self.liste_atout.append(atout)
-        self.danscategorie = False
-        self.firstcategorie = self.liste_categorie[0]
-        self.firstatout = self.dict_atout[self.firstcategorie][self.liste_atout[0]]
-        self.indexfirstcategorie = 0
-        self.indexfirstatout = 0
-        self.label_firstcategorie = self.font.render('< '+str(self.firstcategorie)+' >', True, JAUNE)
-        self.label_firstatout = self.font.render('< None >', True, JAUNE)
+
+        self.firstatout = ChoixDoubleEntree(self.dict_atout, self.font)
 
     def getcoulliterral(self):
         listecoullit = []
@@ -366,18 +360,11 @@ class Creaperso:
                 self.modifcoul = True
                 couselector -= 1
             couselector = 0 if couselector > len(self.liste_coul)-1 else couselector
-            couselector = len(self.liste_coul)-1 if x < 0 else couselector
+            couselector = len(self.liste_coul)-1 if couselector < 0 else couselector
             self.index[y] = couselector
 
         elif self.cadre_selector == 1:
-            carselector = self.carindex[y]
-            if direction.key == pygame.K_RIGHT:
-                carselector += 1
-            elif direction.key == pygame.K_LEFT:
-                carselector -= 1
-            carselector = 0 if carselector > 5 else carselector
-            carselector = 5 if carselector < 0 else carselector
-            self.carindex[y] = carselector
+            self.liste_carac[self.ligne_selector].eventreaction(direction)
 
         elif self.cadre_selector == 2:
             categorieselector = self.indexfirstcategorie
@@ -542,12 +529,14 @@ class Creaperso:
         surface.blit(self.label_peau, (8, 8 + 72))
         surface.blit(self.label_chemise, (8, 8 + 96))
         surface.blit(self.label_pantalon, (8, 8 + 120))
+
         if self.modifcoul:
             imgsource = './images/pj/pj_type.png'
             img2modify = PIL.Image.open(imgsource).convert('RGB')
             self.update_image(img2modify)
             self.sprite_sheet = pygame.image.load('.\current\pj_type.png').convert_alpha()
             self.modifcoul = False
+
         image = self.sprite_sheet.subsurface((32, 0, 32, 32))
         image = pygame.transform.scale(image, (128, 128))
         surface.blit(image, (150, 8+30))
@@ -555,57 +544,188 @@ class Creaperso:
         self.cadre_carac.drawme(surface)
         surface.blit(self.label_carac, (8 + 320 + 75, 8))
 
-        surface.blit(self.label_force, (8 + 320, 8 + 24))
-        val = self.font.render(str(self.carindex[0]), True, JAUNE)
-        surface.blit(val, (8+320+180, 8+24))
-
-        surface.blit(self.label_dexterite, (8 + 320, 8 + 48))
-        val = self.font.render(str(self.carindex[1]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 180, 8 + 48))
-
-        surface.blit(self.label_constitution, (8 + 320, 8 + 72))
-        val = self.font.render(str(self.carindex[2]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 180, 8 + 72))
-
-        surface.blit(self.label_intelligence, (8 + 320, 8 + 96))
-        val = self.font.render(str(self.carindex[3]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 180, 8 + 96))
-
-        surface.blit(self.label_sagesse, (8 + 320, 8 + 120))
-        val = self.font.render(str(self.carindex[4]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 180, 8 + 120))
-
-        surface.blit(self.label_charisme, (8 + 320, 8 + 144))
-        val = self.font.render(str(self.carindex[5]), True, JAUNE)
-        surface.blit(val, (8 + 320 + 180, 8 + 144))
+        x, y = 8 + 320, 8 + 24
+        i = 0
+        for carac in self.liste_carac:
+            if self.cadre_selector == 1 and self.ligne_selector == i:
+                ligne = True
+            else:
+                ligne = False
+            carac.drawme(surface, (x,y), ligne)
+            y += 24
 
         self.cadre_atout.drawme(surface)
         self.cadre_at1.drawme(surface)
-        surface.blit(self.label_firstcategorie,(8,8+200))
-        surface.blit(self.label_firstatout, (160, 8 + 200))
-        """self.cadre_at2.drawme(surface)
-        self.cadre_at3.drawme(surface)
-        self.cadre_at4.drawme(surface)"""
 
         if self.cadre_selector == 0:
             pygame.draw.line(surface, JAUNE, (8, 8 + (2 + self.ligne_selector) * 24),
                              (100, 8 + (2 + self.ligne_selector) * 24), 2)
-
-        elif self.cadre_selector == 1:
-            pygame.draw.line(surface, JAUNE, (320+8, 8 + (2 + self.ligne_selector) * 24),
-                             (320+150, 8 + (2 + self.ligne_selector) * 24), 2)
-
-        else:
-            if not self.danscategorie:
-                pygame.draw.line(surface, JAUNE, (8, 200 + 8 + 24), (150, 200+ 8 + 24), 2)
-            else:
-                pygame.draw.line(surface, JAUNE, (160, 200 + 8 + 24), (320-8, 200 + 8 + 24), 2)
+        theligne = True if self.cadre_selector == 2 else False
+        self.firstatout.drawme(surface, (8, 8+200), theligne)
 
     def recup_pj(self):
+        self.carindex=[]
+
+        for carac in self.liste_carac:
+            self.carindex.append(carac.total)
+
         return {'nom': 'Bob',
                      'source_img': '.\current\pj_type.png',
-                     'caracs': self.carindex,
-                     }
+                     'caracs': self.carindex}
+
+
+class ChoixDoubleEntree:
+    def __init__(self, dictionnaire, font):
+        self.dictionnaire = dictionnaire
+
+        self.font = font
+
+        self.list_choix_1 = ['choisir']
+        for choix in self.dictionnaire:
+            self.list_choix_1.append(choix)
+        self.longueur_choix_1 = len(self.list_choix_1)
+        self.index_liste_1 = 0
+
+        self.list_choix_2 = ['choisir']
+        self.longueur_choix_2 = len(self.list_choix_2)
+        self.index_liste_2 = 0
+
+        self.contenu = 'Merci de choisir un atout'
+        self.indexselector = 0
+
+    def refresh_list2(self):
+        self.list_choix_2 = ['choisir']
+        if self.index_liste_1 != 0:
+            for choix in self.dictionnaire[self.list_choix_1[self.index_liste_1]]:
+                self.list_choix_2.append(choix)
+        self.longueur_choix_2 = len(self.list_choix_2)
+        self.index_liste_2 = 0
+
+    def eventreaction(self, event):
+        modifliste2 = False
+        if event.key == pygame.K_RETURN:
+            self.indexselector += 1
+            if self.indexselector > 1:
+                self.indexselector = 0
+
+        elif self.indexselector == 0:
+            if event.key == pygame.K_LEFT:
+                self.index_liste_1 -= 1
+                if self.index_liste_1 < 1:
+                    self.index_liste_1 = self.longueur_choix_1 - 1
+                modifliste2 = True
+            elif event.key == pygame.K_RIGHT:
+                self.index_liste_1 += 1
+
+                if self.index_liste_1 > self.longueur_choix_1 - 1:
+                    self.index_liste_1 = 1
+                modifliste2 = True
+
+            if modifliste2:
+                self.refresh_list2()
+
+        elif self.indexselector == 1:
+            if event.key == pygame.K_LEFT:
+                self.index_liste_2 -= 1
+                if self.index_liste_2 < 0:
+                    self.index_liste_2 = self.longueur_choix_2 - 1
+            elif event.key == pygame.K_RIGHT:
+                self.index_liste_2 += 1
+                if self.index_liste_2 > self.longueur_choix_2 - 1:
+                    self.index_liste_2 = 0
+
+    def drawme(self, surface, position, ligne):
+        x, y = position
+        text = '< ' + self.list_choix_1[self.index_liste_1] + ' >'
+        val1 = self.font.render(text, True, JAUNE)
+        surface.blit(val1, (x, y))
+
+        x2 = x + val1.get_width() + 10
+
+        text = '< ' + self.list_choix_2[self.index_liste_2] + ' >'
+        val2 = self.font.render(text, True, JAUNE)
+        surface.blit(val2, (x2, y))
+
+        if ligne:
+            y2 = y+30
+            if self.indexselector == 0:
+                pygame.draw.line(surface, JAUNE, (x, y2), (x2 - 10, y2), 2)
+            else:
+                pygame.draw.line(surface, JAUNE, (x2, y2), (x2 + val2.get_width(), y2), 2)
+
+    def __str__(self):
+        if self.index_liste_1 == 0:
+
+            return 'choisir choisir Merci de choisir un atout'
+        else:
+            if self.index_liste_2 == 0:
+                return self.list_choix_1[self.index_liste_1] + ' ' + 'choisir' + ' ' + 'Merci de choisir un atout'
+            else:
+                return self.list_choix_1[self.index_liste_1] + ' ' + self.list_choix_2[self.index_liste_2] + ' ' + \
+                       self.dictionnaire[self.list_choix_1[self.index_liste_1]][self.list_choix_2[self.index_liste_2]]
+
+
+class ModificateurCarac:
+    def __init__(self, nom, font, pointinvestit=0, modificateur=0, base=0):
+        self.nom = nom
+        self.font = font
+
+        self._pointinvestit = pointinvestit
+        self._modificateur = modificateur
+        self._base = base
+
+        self._total = self._base + self._modificateur + self._pointinvestit
+
+    def eventreaction(self, event):
+
+        if event.key == pygame.K_RIGHT:
+            self._pointinvestit += 1
+        elif event.key == pygame.K_LEFT:
+            self._pointinvestit -= 1
+
+        self._pointinvestit = 0 if self._pointinvestit < 0 else self._pointinvestit
+        self._pointinvestit = 5 if self._pointinvestit > 5 else self._pointinvestit
+        self.actustat()
+
+    def actustat(self):
+        self._total = self._base + self._modificateur+self._pointinvestit
+
+
+    @property
+    def base(self):
+        return self._base
+
+    @base.setter
+    def base(self, newval):
+        self._base = newval
+        self.actustat()
+
+    @property
+    def modificateur(self):
+        return self._modificateur
+
+    @modificateur.setter
+    def modificateur(self, newval):
+        self._modificateur = newval
+        self.actustat()
+
+    @property
+    def total(self):
+        return self._total
+
+    def drawme(self, surface, position, ligne):
+
+        x,y = position
+        text = '< '+self.nom + ' > : '+ str(self._base) + ' + '+str(self._modificateur)+' + ' +str(self._pointinvestit)+\
+               ' = '+ str(self._total)
+
+        thetext = self.font.render(text, True, JAUNE)
+        surface.blit(thetext, position)
+
+        if ligne:
+            x2 = x + thetext.get_width()
+            y2 = y + 30
+            pygame.draw.line(surface, JAUNE, (x, y2), (x2, y2), 2)
 
 
 if __name__ == '__main__':
